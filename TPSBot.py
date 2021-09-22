@@ -1,8 +1,5 @@
 # bot pour tps
 # by SP
-#OWO
-#GET HACKU ?
-# haku ? 
 
 """
 fonctionnalités à terme :
