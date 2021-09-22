@@ -17,7 +17,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import urllib.request
-
+import random
 
 def convTime(t):
     """
@@ -237,6 +237,11 @@ def prep_dict(d, depth=0, ignoredkeys=None):
                 ret += ("   " * depth + "{} : {}\n".format(key, e))
     return ret
 
+def randomColor():
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+    return r,g,b
 
 def run():
     load_dotenv()
@@ -251,6 +256,21 @@ def run():
         # activity = discord.CustomActivity(name="TEST2")
         # await client.change_presence(activity=activity)
         # ne fonctionne pas, peut-être que ça n'est pas possible pour un bot :(
+
+    async def sendCours(ctx,cours):
+        creneau = cours["creneau"]
+        salle = cours["salle"]
+        resume = cours["resume"]
+        embed = discord.Embed(title=resume, description=creneau + "\n" + salle, color=discord.Color.from_rgb(*randomColor()))
+        await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
+
+    @client.command(name="test")
+    async def test(ctx):
+        cours_today = getToday(cal)
+        key = list((cours_today.keys()))[0]
+        cours = cours_today[key]
+        await sendCours(ctx,cours)
 
     @client.command(name="next")
     async def nextCours(ctx):
@@ -310,9 +330,9 @@ def run():
                 to_send += code(prep_dict(cours_de_ce_jour[premier_cours_key])) + "\n"
         await ctx.send(to_send)
 
-    @client.command(name="oui")
-    async def ping(ctx):
-        ctx.send("non")
+    # @client.command(name="oui")
+    # async def ping(ctx):
+    #     await ctx.send("non")
 
     @client.command(name="cours")
     async def cours(ctx, date=None):
