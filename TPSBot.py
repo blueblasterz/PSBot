@@ -1,7 +1,7 @@
 # bot pour tps
 # by SP
 #OWO
-
+#GET HACKU ?
 # haku ? 
 
 """
