@@ -1,6 +1,9 @@
 # bot pour tps
 # by SP
+<<<<<<< HEAD
 
+=======
+>>>>>>> 877d4373844f133806ba2e3adef66742522bb340
 
 """
 fonctionnalités à terme :
