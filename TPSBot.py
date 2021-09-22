@@ -1,7 +1,6 @@
-# CHANGEMENT DE OUF
 # bot pour tps
 # by SP
-
+#OWO
 
 """
 fonctionnalités à terme :
