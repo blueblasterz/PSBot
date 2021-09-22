@@ -258,11 +258,11 @@ def run():
         # ne fonctionne pas, peut-être que ça n'est pas possible pour un bot :(
 
     async def sendCours(ctx,cours):
+        # printDict(cours)
         creneau = cours["creneau"]
         salle = cours["salle"]
         resume = cours["resume"]
         embed = discord.Embed(title=resume, description=creneau + "\n" + salle, color=discord.Color.from_rgb(*randomColor()))
-        await ctx.send(embed=embed)
         await ctx.send(embed=embed)
 
     @client.command(name="test")
@@ -292,23 +292,23 @@ def run():
         to_send = ""
         if len(en_cours) != 0:  # ie il y a des cours actuellement
             if len(en_cours) == 1:
-                to_send += "Ce cours est en cours :\n"
-                to_send += code(prep_dict(today_cours[en_cours[0]])) + "\n"
+                await ctx.send("Ce cours est en cours :")
+                await sendCours(ctx, today_cours[en_cours[0]])
             else:
-                to_send += "Ces cours sont en cours :\n"
+                await ctx.send("Ces cours sont en cours :")
                 for key in en_cours:
-                    to_send += code(prep_dict(today_cours[key])) + "\n"
+                    await sendCours(ctx, today_cours[key])
         if len(not_begun) != 0:  # il reste des cours aujourd'hui qui n'ont pas commencés
-            to_send += "Le prochain cours est :\n"
+            await ctx.send("Le prochain cours est :")
             plusprocheindex = 0
             plusproche = not_begun[0][1]
             for i, e in enumerate(not_begun):
                 if e[1] < plusproche:
                     plusproche = e[1]
                     plusprocheindex = i
-            to_send += code(prep_dict(today_cours[not_begun[plusprocheindex][0]])) + "\n"
+            await sendCours(ctx, today_cours[not_begun[plusprocheindex][0]])
         else:  # plus aucun cours aujourd'hui, on va chercher demain ou plus loin encore
-            to_send += "Plus de cours aujourd'hui !\n"
+            await ctx.send("Plus de cours aujourd'hui !")
             nextday = demain(*today)
             keys = cal.keys()
             limite = 100
@@ -317,9 +317,9 @@ def run():
                 nextday = demain(*nextday)
                 i += 1
             if i == 100:
-                to_send += "Aucun cours trouvé dans les 100 prochains jours :(\n"
+                await ctx.send("Aucun cours trouvé dans les 100 prochains jours :(")
             else:
-                to_send += "Le prochain cours sera le {}/{} :\n".format(*nextday)
+                await ctx.send("Le prochain cours sera le {}/{} :\n".format(*nextday))
                 cours_de_ce_jour = getDay(cal, *nextday)
                 premier_cours = (24, 60)
                 premier_cours_key = ()
@@ -327,7 +327,7 @@ def run():
                     if hd < premier_cours[0] or (hd == premier_cours[0] and md < premier_cours[1]):
                         premier_cours = (hd, md)
                         premier_cours_key = (hd, md, hf, mf)
-                to_send += code(prep_dict(cours_de_ce_jour[premier_cours_key])) + "\n"
+                await sendCours(ctx, cours_de_ce_jour[premier_cours_key])
         await ctx.send(to_send)
 
     # @client.command(name="oui")
@@ -339,27 +339,29 @@ def run():
         if date == None:
             jour = getToday(cal)
             # await message.channel.send("```" + prep_dict(jour) + "```")
-            to_send = "Cours d'aujourd'hui :\n"
-            to_send += code(prep_dict(jour)) + "\n"
-            await ctx.send(to_send)
+            await ctx.send("Cours d'aujourd'hui :\n")
+            # to_send += code(prep_dict(jour)) + "\n"
+            for cours in jour.values():
+                await sendCours(ctx, cours)
         else:
             date = date.split("/")
             if len(date) != 2:
-                to_send = "Utilisation : `!date jj/mm`"
+                await ctx.send("Utilisation : `!date jj/mm`")
+                return
+            try:
+                month = int(date[1])
+                day = int(date[0])
+            except ValueError:
+                await ctx.send("Utilisation : `!date jj/mm`")
+                return
+            if (day, month) in cal.keys():
+                await ctx.send("Cours du {}/{}\n".format(date[0], date[1]))
+                # to_send += code(prep_dict(cal[(day, month)])) + "\n"
+                jour = cal[(day, month)]
+                for cours in jour.values():
+                    await sendCours(ctx, cours)
             else:
-                try:
-                    month = int(date[1])
-                    day = int(date[0])
-                except ValueError:
-                    to_send = "Utilisation : `!date jj/mm`"
-                    await message.channel.send(to_send)
-                    return
-                if (day, month) in cal.keys():
-                    to_send = "Cours du {}/{}\n".format(date[0], date[1])
-                    to_send += code(prep_dict(cal[(day, month)])) + "\n"
-                else:
-                    to_send = "Pas de cours le {}/{}\n".format(date[0], date[1])
-            await ctx.send(to_send)
+                await ctx.send("Pas de cours le {}/{}\n".format(date[0], date[1]))
 
     @client.command(name="demain")
     async def coursDemain(ctx):
