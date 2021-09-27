@@ -241,7 +241,7 @@ def randomColor():
     r = random.randint(0, 255)
     g = random.randint(0, 255)
     b = random.randint(0, 255)
-    return r,g,b
+    return r, g, b
 
 def run():
     load_dotenv()
@@ -270,7 +270,7 @@ def run():
         cours_today = getToday(cal)
         key = list((cours_today.keys()))[0]
         cours = cours_today[key]
-        await sendCours(ctx,cours)
+        await sendCours(ctx, cours)
 
     @client.command(name="next")
     async def nextCours(ctx):
