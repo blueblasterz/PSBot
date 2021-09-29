@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 import urllib.request
 import random
 
+
 def convTime(t):
     """
     :param t: formatted time : "yyyyMMddTHHmmssZ"
@@ -162,6 +163,17 @@ def relatif(hd, md, hf, mf, h, m):
             return 2
     return 1
 
+def est_avant(h1,m1,h2,m2):
+    """
+    :param h1: premiere heure
+    :param m1:
+    :param h2: deuxième heure
+    :param t2:
+    :return: true si la premire heure est avant la deuxieme
+             false sinon
+    """
+    return (h1 < h2) or (h1 == h2 and m1 <= m2)
+
 
 def until(h1, m1, h2, m2):
     """
@@ -237,11 +249,13 @@ def prep_dict(d, depth=0, ignoredkeys=None):
                 ret += ("   " * depth + "{} : {}\n".format(key, e))
     return ret
 
+
 def randomColor():
     r = random.randint(0, 255)
     g = random.randint(0, 255)
     b = random.randint(0, 255)
     return r, g, b
+
 
 def run():
     load_dotenv()
@@ -264,6 +278,29 @@ def run():
         resume = cours["resume"]
         embed = discord.Embed(title=resume, description=creneau + "\n" + salle, color=discord.Color.from_rgb(*randomColor()))
         await ctx.send(embed=embed)
+
+    async def sendListeCours(ctx,liste):
+        """
+        :param ctx: contexte au sens de discord = le channel où le message sera envoyé
+        :param liste: liste de dictionnaires de cours
+        :return: None
+        """
+        # tri
+        cp = liste.copy()
+        liste_trie = []
+        # print(cp)
+        while cp: # tant que cp n'est pas vide
+            premier_i = 0
+            premier_h = cp[0]["debut"]
+            for i in range(1,len(cp)):
+                if est_avant(*cp[i]["debut"], *premier_h):
+                    premier_i = i
+                    premier_h = cp[i]["debut"]
+            liste_trie.append(cp.pop(premier_i))
+
+        for cours in liste_trie:
+            await sendCours(ctx, cours)
+
 
     @client.command(name="test")
     async def test(ctx):
@@ -289,7 +326,6 @@ def run():
                 en_cours.append((hd, md, hf, mf))
             else:  # le cours est déjà fini
                 pass  # fonc on ignore
-        to_send = ""
         if len(en_cours) != 0:  # ie il y a des cours actuellement
             if len(en_cours) == 1:
                 await ctx.send("Ce cours est en cours :")
@@ -328,21 +364,18 @@ def run():
                         premier_cours = (hd, md)
                         premier_cours_key = (hd, md, hf, mf)
                 await sendCours(ctx, cours_de_ce_jour[premier_cours_key])
-        await ctx.send(to_send)
 
-    # @client.command(name="oui")
-    # async def ping(ctx):
-    #     await ctx.send("non")
 
     @client.command(name="cours")
     async def cours(ctx, date=None):
-        if date == None:
+        if date is None:
             jour = getToday(cal)
             # await message.channel.send("```" + prep_dict(jour) + "```")
             await ctx.send("Cours d'aujourd'hui :\n")
             # to_send += code(prep_dict(jour)) + "\n"
-            for cours in jour.values():
-                await sendCours(ctx, cours)
+            # for cours in jour.values():
+            #     await sendCours(ctx, cours)
+            await sendListeCours(ctx, list(jour.values()))
         else:
             date = date.split("/")
             if len(date) != 2:
@@ -357,9 +390,10 @@ def run():
             if (day, month) in cal.keys():
                 await ctx.send("Cours du {}/{}\n".format(date[0], date[1]))
                 # to_send += code(prep_dict(cal[(day, month)])) + "\n"
-                jour = cal[(day, month)]
-                for cours in jour.values():
-                    await sendCours(ctx, cours)
+                # jour = cal[(day, month)]
+                # for cours in jour.values():
+                #     await sendCours(ctx, cours)
+                await sendListeCours(ctx, list(cal[(day, month)].values()))
             else:
                 await ctx.send("Pas de cours le {}/{}\n".format(date[0], date[1]))
 
@@ -369,11 +403,12 @@ def run():
         today = [date[2], date[1]]
         dem = demain(*today)
         if dem in cal.keys():
-            to_send = "Cours de demain : ({}/{})\n".format(*dem)
-            to_send += code(prep_dict(cal[dem])) + "\n"
+            await ctx.send("Cours de demain : ({}/{})".format(*dem))
+            # for cours in cal[dem].values():
+            #     await sendCours(ctx, cours)
+            await sendListeCours(ctx, list(cal[dem].values()))
         else:
-            to_send = "Pas de cours demain ! ({}/{})\n".format(*dem)
-        await ctx.send(to_send)
+            await ctx.send("Pas de cours demain ! ({}/{})".format(*dem))
 
     client.run(TOKEN)
 
